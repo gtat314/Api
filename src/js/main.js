@@ -202,7 +202,7 @@ Api.prototype.call = function( callback ) {
 
                 if ( typeof api_onStatus500 === 'function' ) {
 
-                    api_onStatus500( this._xhr.response );
+                    api_onStatus500( this._xhr.response, this._fd );
 
                 }
 
