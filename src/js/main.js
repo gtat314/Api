@@ -80,11 +80,47 @@ function Api() {
      */
     this._async = true;
 
+    /**
+     * 
+     * @property
+     * @private
+     */
+    this._enforceJson = false;
+
+    /**
+     * 
+     * @property
+     * @private
+     */
+    this._rawUrl = '';
+
+    /**
+     * 
+     * @property
+     * @private
+     */
+    this._authuser = null;
+
+    /**
+     * 
+     * @property
+     * @private
+     */
+    this._authtoken = null;
+
+    /**
+     * 
+     * @property
+     * @private
+     */
+    this._token = null;
 
 
 
-    this._fd.append( 'authuser', localStorage.getItem( 'authuser' ) );
-    this._fd.append( 'authtoken', localStorage.getItem( 'authtoken' ) );
+
+    this._token = localStorage.getItem( 'token' );
+    this._authuser = localStorage.getItem( 'authuser' );
+    this._authtoken = localStorage.getItem( 'authtoken' );
 
     if ( typeof API_URL === 'string' ) {
 
@@ -100,8 +136,8 @@ function Api() {
  */
 Api.prototype.nonAuth = function() {
 
-    this._fd[ 'delete' ]( 'authuser' );
-    this._fd[ 'delete' ]( 'authtoken' );
+    this._authuser = null;
+    this._authtoken = null;
 
     return this;
 
@@ -114,11 +150,23 @@ Api.prototype.nonAuth = function() {
  */
 Api.prototype.payload = function( data ) {
 
-    for ( entry in data ) {
+    for ( var entry in data ) {
 
         this._fd.append( entry, data[ entry ] );
 
     }
+
+    this._url = this._rawUrl.replace( /:([a-zA-Z0-9_]+)/g, function ( match, p1 ) {
+
+        if ( data.hasOwnProperty( p1 ) ) {
+
+            return encodeURIComponent( data[ p1 ] );
+
+        }
+
+        return match;
+
+    } );
 
     return this;
 
@@ -137,6 +185,46 @@ Api.prototype.end = function( endpoint ) {
 
 };
 
+Api.prototype.delete = function( url ) {
+
+    this._method = 'DELETE';
+
+    this.url( url );
+
+    return this;
+
+};
+
+Api.prototype.put = function( url ) {
+
+    this._method = 'PUT';
+
+    this.url( url );
+
+    return this;
+
+};
+
+Api.prototype.post = function( url ) {
+
+    this._method = 'POST';
+
+    this.url( url );
+
+    return this;
+
+};
+
+Api.prototype.get = function( url ) {
+
+    this._method = 'GET';
+
+    this.url( url );
+
+    return this;
+
+};
+
 /**
  * 
  * @param {URL} url
@@ -144,6 +232,7 @@ Api.prototype.end = function( endpoint ) {
  */
 Api.prototype.url = function( url ) {
 
+    this._rawUrl = url;
     this._url = url;
 
     return this;
@@ -158,6 +247,22 @@ Api.prototype.url = function( url ) {
 Api.prototype.setTimeout = function( miliseconds ) {
 
     this._timeout = miliseconds;
+
+    return this;
+
+};
+
+Api.prototype.enforceJson = function() {
+
+    this._enforceJson = true;
+
+    return this;
+
+};
+
+Api.prototype.setMethod = function( method ) {
+
+    this._method = method;
 
     return this;
 
@@ -214,6 +319,37 @@ Api.prototype.call = function( callback ) {
 
     }.bind( this );
 
-    this._xhr.send( this._fd );
+    if ( this._token !== null ) {
+
+        this._xhr.setRequestHeader( 'Authorization', 'Bearer ' + this._token );
+
+    }
+
+    if ( this._authtoken !== null ) {
+
+        this._xhr.setRequestHeader( 'authuser', this._authuser );
+        this._xhr.setRequestHeader( 'authtoken', this._authtoken );
+
+    }
+
+    if ( this._enforceJson === false ) {
+
+        this._xhr.send( this._fd );
+
+    } else {
+
+        this._xhr.setRequestHeader( 'Content-Type', 'application/json' );
+
+        var formDataObj = {};
+        
+        for ( var pair of this._fd.entries() ) {
+
+            formDataObj[ pair[ 0 ] ] = pair[ 1 ];
+
+        }
+
+        this._xhr.send( JSON.stringify( formDataObj ) );
+
+    }
 
 };
