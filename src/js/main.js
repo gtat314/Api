@@ -156,17 +156,21 @@ Api.prototype.payload = function( data ) {
 
     }
 
-    this._url = this._rawUrl.replace( /:([a-zA-Z0-9_]+)/g, function ( match, p1 ) {
+    if ( this._rawUrl !== '' ) {
 
-        if ( data.hasOwnProperty( p1 ) ) {
+        this._url = this._rawUrl.replace( /:([a-zA-Z0-9_]+)/g, function ( match, p1 ) {
 
-            return encodeURIComponent( data[ p1 ] );
+            if ( data.hasOwnProperty( p1 ) ) {
 
-        }
+                return encodeURIComponent( data[ p1 ] );
 
-        return match;
+            }
 
-    } );
+            return match;
+
+        } );
+
+    }
 
     return this;
 
@@ -329,6 +333,13 @@ Api.prototype.call = function( callback ) {
 
         this._xhr.setRequestHeader( 'authuser', this._authuser );
         this._xhr.setRequestHeader( 'authtoken', this._authtoken );
+
+        if ( this._enforceJson === false ) {
+
+            this._fd.append( 'authuser', this._authuser );
+            this._fd.append( 'authtoken', this._authtoken );
+
+        }
 
     }
 
