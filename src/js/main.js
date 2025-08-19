@@ -189,7 +189,7 @@ Api.prototype.end = function( endpoint ) {
 
 };
 
-Api.prototype.delete = function( url ) {
+Api.prototype[ 'delete' ] = function( url ) {
 
     this._method = 'DELETE';
 
@@ -353,8 +353,21 @@ Api.prototype.call = function( callback ) {
 
         var formDataObj = {};
         
-        for ( var pair of this._fd.entries() ) {
+        var entries = this._fd.entries();
+        var pairs = [];
 
+        var next = entries.next();
+
+        while ( !next.done ) {
+
+            pairs.push( next.value );
+            next = entries.next();
+
+        }
+
+        for ( var i = 0; i < pairs.length; i++ ) {
+
+            var pair = pairs[ i ];
             formDataObj[ pair[ 0 ] ] = pair[ 1 ];
 
         }
